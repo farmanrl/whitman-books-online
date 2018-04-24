@@ -103,7 +103,7 @@ class ListingModel(db.Model):
         Returns:
             json: A jsonified listing.
         """
-        return {'price': self.price, 'condition': self.condition, 'status': self.status, "listing_id": self.listing_id, 'timestamp': self.timestamp}
+        return {'price': self.price, 'condition': self.condition, 'status': self.status, "listing_id": self.listing_id, 'timestamp': self.timestamp, 'bookTitle': self.book.title}
 
     def bu_bare_json(self):  # Book to user bare jason
         """Returns a json object representing the listing. Used when
@@ -115,7 +115,7 @@ class ListingModel(db.Model):
         Returns:
             json: A jsonified listing.
         """
-        return {'price': self.price, 'condition': self.condition, 'status': self.status, "listing_id": self.listing_id, "google_tok": self.google_tok, 'timestamp': self.timestamp}
+        return {'price': self.price, 'condition': self.condition, 'status': self.status, "listing_id": self.listing_id, "google_tok": self.google_tok, 'timestamp': self.timestamp, 'bookTitle': self.book.title}
     # def get_user(self):
     #    user = []
     #    user.append(user.find_by_google_tok(self.google_tok))
@@ -247,6 +247,7 @@ class Listing(Resource):
                 isbns.append(l.isbn)
         # PAGING
         #of = ceil(len(all_listings)/page_size)
+        print(listing.bare_json() for listing in all_listings)
         return {"listings": [listing.bare_json() for listing in all_listings], "isbns": isbns}
         # return {"listings": [listing.listing_json_w_user() for listing in ListingModel.query.filter_by(isbn=isbn).order_by(ListingModel.price).all()]}
         # for when we do paging: return {"listings": [all_listings[i].bare_json() for i in range(page*page_size,(min((page+1)*page_size, len(all_listings))))], "isbns": isbns, "page": page, "of": of}
@@ -390,7 +391,9 @@ class allListings(Resource):
             for listing in listings:
                 if listing.isbn not in isbns:
                     isbns.append(listing.isbn)
+            (print(listing.bare_json()) for listing in listings)
             return{"listings": [listing.bare_json() for listing in listings], "google_tokens": tokens, "isbns": isbns}
+        (print(listing.bare_json()) for listing in listings)
         return {"listings": [listing.bu_bare_json() for listing in listings], "google_tokens": tokens}
 
         """try:
