@@ -115,13 +115,6 @@ class ListingModel(db.Model):
             json: A jsonified listing.
         """
         return {'price': self.price, 'condition': self.condition, 'status': self.status, "listing_id": self.listing_id, "google_tok": self.google_tok, 'timestamp': self.timestamp, 'bookTitle': self.book.title}
-<<<<<<< HEAD
-    # def get_user(self):
-    #    user = []
-    #    user.append(user.find_by_google_tok(self.google_tok))
-    #    return user
-=======
->>>>>>> 9a1b5cddab303fa85c0c281b5542019eeb9d16ac
 
     @classmethod
     def find_by_isbn(cls, isbn):  # abstracted and redifined from get
@@ -238,12 +231,6 @@ class Listing(Resource):
         for l in all_listings:
             if l.isbn not in isbns:  # avoid duplicates
                 isbns.append(l.isbn)
-<<<<<<< HEAD
-        # PAGING
-        #of = ceil(len(all_listings)/page_size)
-        print(listing.bare_json() for listing in all_listings)
-=======
->>>>>>> 9a1b5cddab303fa85c0c281b5542019eeb9d16ac
         return {"listings": [listing.bare_json() for listing in all_listings], "isbns": isbns}
 
     def post(self, ids):
