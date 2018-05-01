@@ -2,8 +2,10 @@ from sqlalchemy import Table, Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from flask_restful import Resource, reqparse
 from math import ceil
+from flask import request
 
 from db import db
+import auth
 
 page_size = 20
 
@@ -11,17 +13,19 @@ page_size = 20
 class UserModel(db.Model):
     """The UserModel object stores information about the user, as well as
     the listing objects that are associated with it.
-Attributes:
-    google_tok (string): The google token for the user.
-    imageURL (string): The URL referencing the user's image.
-    email (string): The user's email.
-    name (string): The user's first name.
-    givenName (string): The user's given name.
-    familyName (string): The user's last name.
-    listings (ListingModel[]): All listings posted by the user,
-"""
 
-# Creates a table named 'users'
+    Attributes:
+        google_tok (string): The google token for the user.
+        imageURL (string): The URL referencing the user's image.
+        email (string): The user's email.
+        name (string): The user's first name.
+        givenName (string): The user's given name.
+        familyName (string): The user's last name.
+        listings (ListingModel[]): All listings posted by the user,
+
+    """
+
+    # Creates a table named 'users'
     __tablename__ = 'users'
 
     google_tok = db.Column(db.String, primary_key=True)
@@ -195,19 +199,14 @@ class User(Resource):
         Returns:
                 json[]: A list of jsonified users.
         """
-
-        #strings = find.split("+")
-        #google_tok = int(strings[0])
-        #page = int(strings[1])
+        auth_error = auth.unauthorized_headers(request.headers)
+        if auth_error: return auth_error
         user = UserModel.find_by_google_tok(google_tok)
         listing_IDs = []
         if user:
             for listing in user.listings:
                 listing_IDs.append(listing.listing_id)
             return {'google_tok': user.google_tok, 'imageURL': user.imageURL, "email": user.email, "name": user.name, "givenName": user.givenName, 'familyName': user.familyName, "listings": listing_IDs}
-            # user.user_json_w_listings()
-            #of = ceil(len(all_listings)/page_size)
-            # return{"user": [all_listings[i].user_json_w_listings() for i in range(page*page_size, min(((page+1)*page_size),len(all_listings)))], "page": page, "of": of}
         return {"message": "user not found"}, 404
 
     def post(self, google_tok):
@@ -219,10 +218,12 @@ class User(Resource):
         Returns:
                 message: What happened with the post call.
         """
+        auth_error = auth.google_tok_mismatch_headers(google_tok, request.headers)
+        if auth_error: return auth_error
         data = User.parser.parse_args()
         print("hello")
         if UserModel.find_by_google_tok(google_tok):
-            return {'message': 'A user with that google_token already exists'}, 400
+            return {'message': 'user '+str(google_tok)+' already exists'}, 200
         user = UserModel(google_tok, data['imageURL'], data['email'],
                          data['name'], data['givenName'], data['familyName'])
         user.save_to_db()
@@ -237,11 +238,13 @@ class User(Resource):
         Returns:
                 message: What happened with the delete call.
         """
+        auth_error = auth.google_tok_mismatch_headers(google_tok, request.headers)
+        if auth_error: return auth_error
         user = UserModel.find_by_google_tok(google_tok)
         if user:
             user.delete_from_db()
             return {"message": "User deleted"}
-        return {"message": "User with user_id (" + google_tok + ") does not exist."}
+        return {"message": "User with user_id (" + google_tok + ") does not exist."}, 404
 
 
 class UserList(Resource):
@@ -261,28 +264,10 @@ Attributes:
         Returns:
                 json[]: A list of jsonified users that match the tokens.
         """
-
+        auth_error = auth.google_tok_mismatch_headers(google_tok, request.headers)
+        if auth_error: return auth_error
         tokens = tokens.split(",")
         all_users = UserModel.query.filter(
             UserModel.google_tok.in_(tokens)).all()
-        #of = ceil(len(all_listings)/page_size)
-        # return {"users": [all_listings[i].user_json_w_listings() for i in range(page*page_size, min(((page+1)*page_size),len(all_listings)))], "page": page, "of": of}
 
         return {"users": [user.bare_json() for user in all_users]}
-
-    #	return {"users": [user.user_json_w_listings() for user in UserModel.query.all()]}
-
-    # search_ = strings[1]
-    # for i in search_:
-    # 	if i == "_":
-    # 		search_by.append(" ")
-    # 	else:
-    # 		search_by.append(i)
-    # search_by = ''.join(search_by)
-    # if len(strings[2]) > 0: # price was provided
-    # 	price = float(strings[2])
-    # 	if len(strings[3]) > 0: #condition was provided
-    # 		condition = strings[3] # "bad", "ehh", "good", or "new"
-    # 		print(search_by)
-    # 		all_listings = ListingModel.query.filter(ListingModel.book.book_json_wo_listings()["author"] == search_by or ListingModel.book.book_json_wo_listings()["title"] == search_by).filter(ListingModel.price <= price).filter(ListingModel.condition >= condition).all()
-    # 		return{"listings": [all_listings[i].listing_json_w_book_and_user() for i in range(page*page_size, min(((page+1)*page_size),len(all_listings)))], "page": page, "of": of}
