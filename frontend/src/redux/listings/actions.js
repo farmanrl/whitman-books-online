@@ -112,7 +112,6 @@ export function fetchListingList(query) {
 }
 
 export function getUserListingList(listingIds) {
-<<<<<<< HEAD
   return (dispatch, getState) => {
     const state = getState();
     const urlDest = `${LISTING_ENDPOINT}${listingIds}`;
@@ -121,12 +120,6 @@ export function getUserListingList(listingIds) {
     const idToken = getIdToken(state);
     requestIds.setRequestHeader("Content-Type", "application/json");
     requestIds.setRequestHeader("Authorization", `Bearer ${idToken}`);
-=======
-  return (dispatch) => {
-    const urlDest = `${LISTING_ENDPOINT}${listingIds}`;
-    const requestIds = new XMLHttpRequest();
-    requestIds.open('GET', urlDest);
->>>>>>> 9a1b5cddab303fa85c0c281b5542019eeb9d16ac
     requestIds.responseType = "json";
     requestIds.send(urlDest);
     requestIds.onload = () => {
